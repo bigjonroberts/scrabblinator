@@ -55,9 +55,14 @@ let rec levenshteinDistance (x     : string)
             ((levenshteinDistance x  lenX      y (lenY - 1)) |> (+) 1)
             ((levenshteinDistance x (lenX - 1) y (lenY - 1)) |> (+) cost)
 
+let calcDistance (searchTerm : string) (entry : GlossaryEntry) =
+    let x = searchTerm.ToLower()
+    let y = entry.Term.ToLower()
+    levenshteinDistance x x.Length y y.Length
+
 let findMatch (searchTerm : string) =
     glossary
-    |> Seq.minBy (fun x -> levenshteinDistance x.Term x.Term.Length searchTerm searchTerm.Length)
+    |> Seq.minBy (calcDistance searchTerm)
 
 let print entry = sprintf "Term: %s\r\nMeaning: %s\r\nDescription: %s" entry.Term entry.Meaning entry.Description
 
