@@ -4,5 +4,5 @@ Glossary micro service with the intention to integrate it with Slack's [Slash Co
 # Usage
 
 ```
-docker run -d -p 8083:8083 -e URL_OR_PATH_TO_CSV="{url or local path to a csv file}" dustinmoris/glossiator:latest
+docker run -d -p 8083:8083 -e URL_OR_PATH_TO_CSV="{url or local path to a csv file}" -e TOKEN="{your secret Slack Commands token}" dustinmoris/glossiator:latest
 ```
