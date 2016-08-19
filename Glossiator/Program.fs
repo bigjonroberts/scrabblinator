@@ -32,44 +32,38 @@ type SlackRequest =
         ResponseUrl : string
     }
     static member FromHttpContext (ctx : HttpContext) =
-        let splitByLineBreaks = fun (s : string) -> s.Split([| '\n'; '\r' |], StringSplitOptions.RemoveEmptyEntries)
-        let postData =
-            ctx.request.rawForm
-            |> Encoding.UTF8.GetString
-            |> splitByLineBreaks
-            |> Array.map (fun s -> 
-                let parts = s.Split [| '=' |]
-                parts.[0], parts.[1])
-            |> Map.ofArray
-
+        let get key =
+            match ctx.request.formData key with
+            | Choice1Of2 x  -> x
+            | _             -> ""
         {
-            Token       = postData.["token"]
-            TeamId      = postData.["team_id"]
-            TeamDomain  = postData.["team_domain"]
-            ChannelId   = postData.["channel_id"]
-            ChannelName = postData.["channel_name"]
-            UserId      = postData.["user_id"]
-            UserName    = postData.["user_name"]
-            Command     = postData.["command"]
-            Text        = postData.["text"]
-            ResponseUrl = postData.["response_url"]
+            Token       = get "token"
+            TeamId      = get "team_id"
+            TeamDomain  = get "team_domain"
+            ChannelId   = get "channel_id"
+            ChannelName = get "channel_name"
+            UserId      = get "user_id"
+            UserName    = get "user_name"
+            Command     = get "command"
+            Text        = get "text"
+            ResponseUrl = get "response_url"
         }
 
-type ValidationResponse =
-    | Valid     of SlackRequest
+type ValidationResponse<'T> =
+    | Valid     of 'T
     | Invalid   of string
 
 let fallback     nextOption value   = if value = null then nextOption   else value    
 let fallbackFunc nextOption value   = if value = null then nextOption() else value
-let fallbackToError msg = fallbackFunc (fun _ -> failwith msg)
+let fallbackToError msg             = fallbackFunc (fun _ -> failwith msg)
 
 let getConfigValue key = 
     Environment.GetEnvironmentVariable key
     |> fallback (ConfigurationManager.AppSettings.[key])
-    |> fallbackToError (sprintf "A config setting with the name %s could not be found." key)
+    |> fallbackToError (sprintf "The config setting with the name %s could not be found." key)
     
 let csvRowToGlossaryEntry (row : CsvRow) =
-    { 
+    {
         Term        = row.GetColumn "Term"; 
         Meaning     = row.GetColumn "Meaning"; 
         Description = row.GetColumn "Description"
@@ -89,7 +83,7 @@ let validateRequest (slackRequest : SlackRequest) =
     else Invalid "Invalid token in request. Your Slack team is not permitted to use this service."
 
 /// See: https://en.wikipedia.org/wiki/Levenshtein_distance#Computing_Levenshtein_distance
-/// Inefficient, but good enough for prototype
+/// Inefficient, but good enough for alpha version
 let rec levenshteinDistance (x     : string)
                             (lenX  : int)
                             (y     : string)
@@ -132,7 +126,8 @@ let app =
                 path "/" >=> OK "Glossary version 0.1.0-Alpha" ]
         POST >=>
             choose [
-                path "/whatis" >=> slackCommand whatis ]
+                path "/whatis"  >=> slackCommand whatis
+                path "/whatis/" >=> slackCommand whatis ]
         NOT_FOUND "Resource not found.  Please note that URLs are case sensitive." ]
 
 let config =
