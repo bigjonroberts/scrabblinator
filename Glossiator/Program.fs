@@ -88,27 +88,37 @@ let validateRequest (slackRequest : SlackRequest) =
     then Valid slackRequest
     else Invalid "Invalid token in request. Your Slack team is not permitted to use this service."
 
-/// See: https://en.wikipedia.org/wiki/Levenshtein_distance#Computing_Levenshtein_distance
-/// Inefficient, but good enough for prototype
-let rec levenshteinDistance (x     : string)
-                            (lenX  : int)
-                            (y     : string)
-                            (lenY  : int) =
-    let min3 x y z = min x (min y z)
+/// See: https://en.wikibooks.org/wiki/Algorithm_Implementation/Strings/Levenshtein_distance#F.23
+let inline min3 one two three = 
+    if one < two && one < three then one
+    elif two < three then two
+    else three
 
-    if      lenX = 0 then lenY
-    else if lenY = 0 then lenX
-    else
-        let cost = if x.[lenX - 1] = y.[lenY - 1] then 0 else 1
-        min3
-            ((levenshteinDistance x (lenX - 1) y  lenY     ) |> (+) 1)            
-            ((levenshteinDistance x  lenX      y (lenY - 1)) |> (+) 1)
-            ((levenshteinDistance x (lenX - 1) y (lenY - 1)) |> (+) cost)
+let wagnerFischer (search: string) (term: string) =
+    let s = search.ToLower()
+    let t = term.ToLower()
+
+    let sLen = s.Length
+    let tLen = t.Length
+    let d = Array2D.create (sLen + 1) (tLen + 1) 0
+
+    for i = 0 to sLen do d.[i, 0] <- i
+    for j = 0 to tLen do d.[0, j] <- j    
+
+    for j = 1 to tLen do
+        for i = 1 to sLen do
+            if s.[i-1] = t.[j-1] then
+                d.[i, j] <- d.[i-1, j-1]
+            else
+                d.[i, j] <-
+                    min3
+                        (d.[i-1, j  ] + 1) // a deletion
+                        (d.[i  , j-1] + 1) // an insertion
+                        (d.[i-1, j-1] + 1) // a substitution
+    d.[sLen, tLen]
 
 let calcDistance (searchTerm : string) (entry : GlossaryEntry) =
-    let x = searchTerm.ToLower()
-    let y = entry.Term.ToLower()
-    levenshteinDistance x x.Length y y.Length
+    wagnerFischer searchTerm entry.Term
 
 let findMatch (searchTerm : string) =
     glossary
@@ -129,11 +139,12 @@ let app =
     choose [ 
         GET >=> 
             choose [ 
-                path "/" >=> OK "Glossary version 0.1.0-Alpha" ]
+                path "/" >=> OK "Glossary version 0.1.0-beta" ]
         POST >=>
             choose [
-                path "/whatis" >=> slackCommand whatis ]
-        NOT_FOUND "Resource not found.  Please note that URLs are case sensitive." ]
+                path "/whatis"  >=> slackCommand whatis
+                path "/whatis/" >=> slackCommand whatis ]
+        NOT_FOUND "Resource not found. Please note that URLs are case sensitive." ]
 
 let config =
     { defaultConfig with
