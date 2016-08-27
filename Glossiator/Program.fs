@@ -11,12 +11,34 @@ open Suave.Operators
 open Suave.Successful
 open Suave.RequestErrors
 
+module Config =
+    let fallback     nextOption value   = if value = null then nextOption   else value    
+    let fallbackFunc nextOption value   = if value = null then nextOption() else value
+    let fallbackToError msg             = fallbackFunc (fun _ -> failwith msg)
+
+    let getValue key = 
+        Environment.GetEnvironmentVariable key
+        |> fallback (ConfigurationManager.AppSettings.[key])
+        |> fallbackToError (sprintf "The config setting with the name %s could not be found." key)
+
+// Load configuration values
+// -------------------------
+let token           = Config.getValue "TOKEN"
+let urlOrPathToCsv  = Config.getValue "URL_OR_PATH_TO_CSV"
+let maxDistance     = Int32.Parse <| Config.getValue "MAX_DISTANCE"
+
+
 type GlossaryEntry =
     {
         Term        : string
         Meaning     : string
         Description : string
     }
+
+type SearchResult =
+    | OneMatch      of GlossaryEntry
+    | ManyMatches   of GlossaryEntry array
+    | NoMatch
 
 type SlackRequest =
     {
@@ -53,14 +75,7 @@ type ValidationResponse<'T> =
     | Valid     of 'T
     | Invalid   of string
 
-let fallback     nextOption value   = if value = null then nextOption   else value    
-let fallbackFunc nextOption value   = if value = null then nextOption() else value
-let fallbackToError msg             = fallbackFunc (fun _ -> failwith msg)
 
-let getConfigValue key = 
-    Environment.GetEnvironmentVariable key
-    |> fallback (ConfigurationManager.AppSettings.[key])
-    |> fallbackToError (sprintf "The config setting with the name %s could not be found." key)
     
 let csvRowToGlossaryEntry (row : CsvRow) =
     {
@@ -70,12 +85,11 @@ let csvRowToGlossaryEntry (row : CsvRow) =
     }
 
 let glossary =
-    getConfigValue "URL_OR_PATH_TO_CSV"
+    Config.getValue "URL_OR_PATH_TO_CSV"
     |> CsvFile.Load
     |> fun x -> x.Rows
     |> Seq.map csvRowToGlossaryEntry
 
-let token = getConfigValue "TOKEN"
 
 let validateRequest (slackRequest : SlackRequest) =
     if slackRequest.Token = token
@@ -115,13 +129,31 @@ let calcDistance (searchTerm : string) (entry : GlossaryEntry) =
     wagnerFischer searchTerm entry.Term
 
 let findMatch (searchTerm : string) =
-    glossary
-    |> Seq.minBy (calcDistance searchTerm)
+    let results =
+        glossary
+        |> Seq.map (fun e -> e, (calcDistance searchTerm e))
+        |> Seq.sortBy snd
+        |> Seq.toArray
+
+    let bestMatch, bestScore = results.[0]
+
+    if bestScore > maxDistance then NoMatch
+    else 
+        let allBestMatches =
+            results
+            |> Array.filter (fun (_, score) -> score = bestScore)
+            |> Array.map fst
+        
+        if allBestMatches.Length > 1 then ManyMatches allBestMatches
+        else OneMatch bestMatch
 
 let format entry = sprintf "Term: %s\r\nMeaning: %s\r\nDescription: %s" entry.Term entry.Meaning entry.Description                
 
 let whatis (req : SlackRequest) =
-    findMatch req.Text |> format
+    match findMatch req.Text with
+    | OneMatch entry        -> entry |> format
+    | ManyMatches entries   -> "" // ToDo
+    | NoMatch               -> "The search term did not match any entries in the glossary. Please check your spelling."
 
 let slackCommand (f : SlackRequest -> string) =
     fun (ctx : HttpContext) ->
