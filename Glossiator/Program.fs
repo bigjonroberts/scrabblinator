@@ -159,13 +159,21 @@ module SlackIntegration =
     let validateRequest (slackRequest : SlackRequest) =
         if slackRequest.Token = token
         then Valid slackRequest
-        else Invalid "Invalid token in request. Your Slack team is not permitted to use this service."
-        
+        else Invalid "Invalid token in request. Your Slack team is not permitted to use this service."        
+
+    let SLACK_RESPONSE (text : string) =
+        text.Replace("&", "&amp;")
+            .Replace("<", "&lt;")
+            .Replace(">", "&gt;")
+        |> sprintf "{ \"text\": \"%s\"}"
+        |> OK
+        >=> Writers.setMimeType "application/json"
+
     let slackCommand (f : SlackRequest -> string) =
         fun (ctx : HttpContext) ->
             (match SlackRequest.FromHttpContext ctx |> validateRequest with
             | Invalid msg -> BAD_REQUEST msg
-            | Valid   req -> f req |> OK) ctx
+            | Valid   req -> f req |> SLACK_RESPONSE) ctx
 
 // -------------------------------
 // WEB SERVICE
@@ -174,7 +182,7 @@ module SlackIntegration =
 open Glossary
 open SlackIntegration
 
-let format entry = sprintf "Term: %s\r\nMeaning: %s\r\nDescription: %s" entry.Term entry.Meaning entry.Description            
+let format entry = sprintf "*Term:* %s\n*Meaning:* %s\n*Description:* %s" entry.Term entry.Meaning entry.Description            
 
 let whatis (req : SlackRequest) =
     match findMatch req.Text with
@@ -184,14 +192,12 @@ let whatis (req : SlackRequest) =
             entries 
             |> Array.map (fun e -> e.Term) 
             |> String.concat ", "
-        sprintf "There was more than one potential match. Did you mean one of the following terms?\r\n%s" terms
+        sprintf "There was more than one potential match. Did you mean one of the following terms?\n%s" terms
     | NoMatch -> "The search term did not match any entries in the glossary. Please check your spelling."
 
 let app = 
     choose [ 
-        GET >=> 
-            choose [ 
-                path "/" >=> OK "Glossary version 0.1.0-beta" ]
+        GET  >=> OK "Glossary version 0.1.0-beta"
         POST >=>
             choose [
                 path "/whatis"  >=> slackCommand whatis
