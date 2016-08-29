@@ -7,13 +7,15 @@ Glossary micro service with the intention to integrate it with Slack's [Slash Co
 
 ## How it works
 
+### Run the Docker container
+
 Glossiator is a micro service which can be hosted in your own environment by running the following Docker command:
 
 ```
 docker run -d -p 8083:8083 -e URL_OR_PATH_TO_CSV="{path to csv file}" -e TOKEN="{secret token}" dustinmoris/glossiator:latest
 ```
 
-The Docker container needs to be launched with two environment variables:
+The Docker container must be launched with two environment variables:
 
 - URL_OR_PATH_TO_CSV
 - TOKEN
@@ -34,12 +36,20 @@ Term is usually the key or an abbreviation that your team would be searching for
 | Meaning: | Continuous Integration |
 | Description: | Continuous Integration (CI) is a development practice that requires developers to integrate code into a shared repository several times a day. Each check-in is then verified by an automated build, allowing teams to detect problems early. |
 
+#### Optional parameters
+
+There is currently one optional environment variable which can be set inside the Docker container to specify the maximum distance between the search term and an entry in the glossary to count as a match: `MAX_DISTANCE`.
+
+The default value is set to `2`.
+
+### Integrate with Slack's Slash Commands
+
 The next step is to integrate it with Slack's [Slash Commands](https://api.slack.com/slash-commands) API.
 
 1. Click on the "Add Configuration" button to add a new configuration.
 2. Enter the desired command. e.g. `/whatis`
 3. Enter the URL to the self hosted Glossiator app. The correct endpoint is called `/whatis`.
-  - Example: `http://glossiator.my-server.com/whatis`
+  - Example: `https://glossiator.my-server.com/whatis`
 4. Choose `POST` from the method drop down.
 5. Use the auto-generated token from the Token field to configure the Docker container (see above).
 6. Configure the remaining fields to your likes. Pick a name and icon for the Slack bot and fill in the optional help text.
