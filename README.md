@@ -1,5 +1,5 @@
 # Glossiator
-Glossary micro service with the intention to integrate it with Slack's [Slash Commands](https://api.slack.com/slash-commands) API.
+[Glossary micro service](https://hub.docker.com/r/dustinmoris/glossiator/) with the intention to integrate it with Slack's [Slash Commands](https://api.slack.com/slash-commands) API.
 
 [![Build Status](https://travis-ci.org/dustinmoris/Glossiator.svg)](https://travis-ci.org/dustinmoris/Glossiator)
 
@@ -9,7 +9,7 @@ Glossary micro service with the intention to integrate it with Slack's [Slash Co
 
 ### Run the Docker container
 
-Glossiator is a micro service which can be hosted in your own environment by running the following Docker command:
+[Glossiator is a micro service](https://hub.docker.com/r/dustinmoris/glossiator/) which can be hosted in your own environment by running the following Docker command:
 
 ```
 docker run -d -p 8083:8083 -e URL_OR_PATH_TO_CSV="{path to csv file}" -e TOKEN="{secret token}" dustinmoris/glossiator:latest
