@@ -38,11 +38,11 @@ Term is usually the key or an abbreviation that your team would be searching for
 
 #### Optional parameters
 
-There is currently one optional environment variable which can be set inside the Docker container to specify the maximum distance between the search term and an entry in the glossary to count as a match: `MAX_DISTANCE`.
+Currently there is one optional environment variable which can be set inside the Docker container to specify the maximum distance between a search term and an entry in the glossary to count as a match: `MAX_DISTANCE`.
 
 The default value is set to `2`.
 
-### Integrate with Slack's Slash Commands
+### Integrate with Slack's Slash Commands API
 
 The next step is to integrate it with Slack's [Slash Commands](https://api.slack.com/slash-commands) API.
 
