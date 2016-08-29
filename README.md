@@ -1,6 +1,10 @@
 # Glossiator
 Glossary micro service with the intention to integrate it with Slack's [Slash Commands](https://api.slack.com/slash-commands) API.
 
+[![Build Status](https://travis-ci.org/dustinmoris/Glossiator.svg)](https://travis-ci.org/dustinmoris/Glossiator)
+
+[![Build History](https://buildstats.info/travisci/chart/dustinmoris/Glossiator)](https://travis-ci.org/dustinmoris/Glossiator/builds)
+
 ## How it works
 
 Glossiator is a micro service which can be hosted in your own environment by running the following Docker command:
