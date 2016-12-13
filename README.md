@@ -59,4 +59,4 @@ Now you should be able to go into your Slack channel and be able to type `/whati
 
 ## License
 
-GNU General Public License v3
+[GNU General Public License v3](https://raw.githubusercontent.com/dustinmoris/Glossiator/master/LICENSE)
