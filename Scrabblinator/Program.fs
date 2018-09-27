@@ -107,7 +107,7 @@ module SlackIntegration =
                 match ctx.request.formData key with
                 | Choice1Of2 x  -> x
                 | _             -> ""
-            printfn "%A" ctx.request
+            // printfn "%A" ctx.request
             {
                 Token       = get "token"
                 TeamId      = get "team_id"
@@ -126,6 +126,7 @@ module SlackIntegration =
         | Invalid   of string
 
     let validateRequest (slackRequest : SlackRequest) =
+        printfn "slack request: %A" slackRequest
         match tokens.Contains slackRequest.Token with
           | true -> Valid slackRequest
           | false -> Invalid "Invalid token in request. Your Slack team is not permitted to use this service."        
@@ -140,7 +141,7 @@ module SlackIntegration =
 
     let slackCommand (f : SlackRequest -> string) =
         fun (ctx : HttpContext) ->
-            printfn "context:%A" ctx.request.rawForm
+            //printfn "context:%A" ctx.request.rawForm
             (match SlackRequest.FromHttpContext ctx |> validateRequest with
             | Invalid msg -> BAD_REQUEST msg
             | Valid   req -> f req |> SLACK_RESPONSE) ctx
