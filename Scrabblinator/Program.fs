@@ -84,7 +84,10 @@ module ScrabbleText =
 
 module SlackIntegration =
 
-    let token = Config.getValue "TOKEN"
+    let tokens = 
+        Config.getValue "TOKEN"
+        |> (fun s -> s.Split(';'))
+        |> Set.ofArray
 
     type SlackRequest =
         {
@@ -123,9 +126,9 @@ module SlackIntegration =
         | Invalid   of string
 
     let validateRequest (slackRequest : SlackRequest) =
-        if slackRequest.Token = token
-        then Valid slackRequest
-        else Invalid "Invalid token in request. Your Slack team is not permitted to use this service."        
+        match tokens.Contains slackRequest.Token with
+          | true -> Valid slackRequest
+          | false -> Invalid "Invalid token in request. Your Slack team is not permitted to use this service."        
 
     let SLACK_RESPONSE (text : string) =
         text.Replace("&", "&amp;")
