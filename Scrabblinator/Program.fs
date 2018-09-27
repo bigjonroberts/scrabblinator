@@ -85,7 +85,7 @@ module ScrabbleText =
 module SlackIntegration =
 
     let tokens = 
-        Config.getValue "TOKEN"
+        Config.getValue "TOKENS"
         |> (fun s -> s.Split(';'))
         |> Set.ofArray
 
