@@ -1,29 +1,29 @@
 # Scrabblinator
 [Scrabblinator micro service](https://hub.docker.com/r/bigjonroberts/scrabblinator) with the intention to integrate it with Slack's [Slash Commands](https://api.slack.com/slash-commands) API.
 
-It was copied from [Glossiator](https://hub.docker.com/r/dustinmoris/glossiator/) for the core Slack parsing and response.
+It was copied from [Glossiator](https://github.com/dustinmoris/glossiator/) for the core Slack parsing and response.
 
 ## How it works
 
 ### Run the Docker container
 
-[Scrabblinator is a micro service](https://hub.docker.com/r/dustinmoris/glossiator/) which can be hosted in your own environment by running the following Docker command:
+[Scrabblinator is a micro service](https://hub.docker.com/r/bigjonroberts/scrabblinator/) which can be hosted in your own environment by running the following Docker command:
 
 ```
-docker run -d -p 8083:8083 -e PREFIX="scrabble-" -e GENMODE="emoji" -e TOKEN="{secret token}" dustinmoris/glossiator:latest
+docker run -d -p 8083:8083 -e PREFIX="scrabble-" -e GENMODE="emoji" -e TOKENS="{secret token}" bigjonroberts/scrablinator:latest
 ```
 
 The Docker container must be launched with at least one environment variable:
 
-- TOKEN
+- TOKENS
 
-`TOKEN` is the secret token that you will be given from Slack's [Slash Commands](https://api.slack.com/slash-commands) configuration page (see below).
+`TOKENS` is a semi-colon `;` delimited list of secret tokens that you will be given from Slack's [Slash Commands](https://api.slack.com/slash-commands) configuration page (see below).
 
 #### Optional parameters
 
-Currently there is one optional environment variable which can be set inside the Docker container to specify the maximum distance between a search term and an entry in the glossary to count as a match: `MAX_DISTANCE`.
+Currently there is one optional environment variable which can be set inside the Docker container to specify the maximum distance between a search term and an entry in the glossary to count as a match: `PREFIX`.
 
-The default value is set to `2`.
+The default value is set to `""`.
 
 ### Integrate with Slack's Slash Commands API
 
