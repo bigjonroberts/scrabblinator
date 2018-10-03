@@ -1,89 +1,15 @@
-﻿open System
-open System.Configuration
 open System.Net
 open Suave
 open Suave.Filters
 open Suave.Operators
 open Suave.Successful
 open Suave.RequestErrors
-open System.Text.RegularExpressions
+open Scrabblinator.ScrabbleText
+open Scrabblinator
 
-// -------------------------------
-// CONFIG
-// -------------------------------
 
-module Config =
-    let fallback     nextOption value   = if value = null then nextOption   else value    
-    let fallbackFunc nextOption value   = if value = null then nextOption() else value
-    let fallbackToError msg             = fallbackFunc (fun _ -> failwith msg)
-
-    let getValue key = 
-        Environment.GetEnvironmentVariable key
-        |> fallback (ConfigurationManager.AppSettings.[key])
-        |> fallbackToError (sprintf "The config setting with the name %s could not be found." key)
-
-    let getValueOrDefault key default1 = 
-        Environment.GetEnvironmentVariable key
-        |> fallback (ConfigurationManager.AppSettings.[key])
-        |> fallback default1
-
-// -------------------------------
-// SCRABBLETEXT DOMAIN
-// -------------------------------
-
-module ScrabbleText =
-
-    let prefix = Config.getValueOrDefault "PREFIX" ""    
-
-    let port = Config.getValueOrDefault "PORT" "8083" |> uint16
-
-    type GenMode =
-      | Emoji
-      | Image
-
-    let genMode =
-        match (Config.getValueOrDefault "GENMODE" "Emoji").ToLower() with
-        | "image" -> Image
-        | _ -> Emoji
-
-    // stolen from http://www.fssnip.net/29/title/Regular-expression-active-pattern
-    let (|Regex|_|) pattern input =
-        let m = Regex.Match(input, pattern)
-        if m.Success then Some(List.tail [ for g in m.Groups -> g.Value ])
-        else None
-
-    let asciiChar = 
-        seq { 65 .. 90 }
-        |> Seq.append (seq { 97 .. 121 })
-        |> Seq.map char
-        |> Set.ofSeq
-
-    let scrabbleize genMode (text:string) =
-    //   let toEmoji (c:char) =
-    //     match string c with
-    //     //   | Regex @"^\p{L}*$" chr -> List.head chr
-    //       | Regex @"^[a-zA-Z]*$" chr -> chr
-    //       | _ -> [ "blank" ]
-    //     |> List.tryHead
-    //     |> function | Some a -> a | None -> "blank"
-    //     |> sprintf ":%s%s:" prefix
-      let toEmoji (c:char) = 
-        match Set.contains c asciiChar with
-          | true -> sprintf ":%s%c:" prefix c
-          | false -> sprintf ":%sblank:" prefix
-      match genMode with
-        | Emoji -> 
-            let emojiText = text |> Seq.map toEmoji 
-            let emojiList = Seq.toList emojiText
-            String.concat " " emojiList
-        | Image -> "not implemented yet"
-
-// -------------------------------
-// SLACK INTEGRATION
-// -------------------------------
-
+[<AutoOpen>]
 module SlackIntegration =
-
     let tokens = 
         Config.getValue "TOKENS"
         |> (fun s -> s.Split(';'))
@@ -149,9 +75,6 @@ module SlackIntegration =
 // -------------------------------
 // WEB SERVICE
 // -------------------------------
-
-open ScrabbleText
-open SlackIntegration
 
 let scrabble (req : SlackRequest) = scrabbleize genMode req.Text
 

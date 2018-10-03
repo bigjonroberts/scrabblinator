@@ -17,6 +17,7 @@ WORKDIR /scrabblinator
 
 # copy everything and build
 COPY . ./
+RUN dotnet test ScrabblinatorTests/ScrabblinatorTests.fsproj
 RUN dotnet publish Scrabblinator/Scrabblinator.fsproj -c Release -o ../build
 
 # Done building app - now build runtime docker image
