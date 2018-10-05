@@ -25,7 +25,7 @@ module ScrabbleText =
 
     let asciiChar = 
         seq { 65 .. 90 }
-        |> Seq.append (seq { 97 .. 121 })
+        |> Seq.append (seq { 97 .. 122 })
         |> Seq.map char
         |> Set.ofSeq
 
